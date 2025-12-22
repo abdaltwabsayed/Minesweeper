@@ -54,7 +54,6 @@ class AStarSolver:
 
         return []
 
-    # ---------- ACTION GENERATION ----------
     def deterministic_actions(self, board):
         actions = []
         for row in board.getBoard():
@@ -81,7 +80,6 @@ class AStarSolver:
                     actions.append(("open", [piece]))
         return actions[:1]  # single guess is enough
 
-    # ---------- HEURISTIC ----------
     def heuristic(self, board):
         unopened = 0
         for row in board.getBoard():
@@ -90,7 +88,6 @@ class AStarSolver:
                     unopened += 1
         return unopened
 
-    # ---------- BOARD HASH ----------
     def board_key(self, board):
         key = []
         for row in board.getBoard():
@@ -98,7 +95,6 @@ class AStarSolver:
                 key.append((p.getClicked(), p.getFlagged(), p.getNumberAround()))
         return tuple(key)
 
-    # ---------- YOUR EXISTING METHODS ----------
     def openUnflagged(self, neighbors):
         for piece in neighbors:
             if not piece.getFlagged():

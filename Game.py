@@ -17,6 +17,13 @@ class Game():
         self.screen = pygame.display.set_mode(self.screenSize)
         running = True
         while running:
+            if (self.board.clickNumber == 0 and pygame.event.EventType.type == pygame.MOUSEBUTTONUP):
+                position = pygame.mouse.get_pos()
+                index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
+                piece = self.board.getPiece(index)
+                piece.setHasBomb(False)
+                piece.click()
+            self.board.setNeighbors()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -24,12 +31,13 @@ class Game():
                     position = pygame.mouse.get_pos()
                     rightClick = pygame.mouse.get_pressed()[2]
                     self.handleClick(position, rightClick)
-                    solver = AStarSolver(self.board)
-                    solver.move()
+                    # solver = AStarSolver(self.board)
+                    # solver.move()
             self.draw()
             pygame.display.flip()
-            solver = AStarSolver(self.board)
-            solver.move()
+            # solver = AStarSolver(self.board)
+            # solver.move()
+            self.draw()
             if (self.board.getWon()):
                 font = pygame.font.SysFont(None, 90)
                 text = font.render("You Win!", True, (0, 255, 0), (255, 255, 255, 30))
@@ -85,10 +93,8 @@ class Game():
     def handleClick(self, position, rightClick):
         if (self.board.getLost()):
             return
-        if not isinstance(position, Piece):
-            index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
-            piece = self.board.getPiece(index)
-        else: piece = position
+        index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
+        piece = self.board.getPiece(index)
         self.board.handleClick(piece, rightClick)
     def getScreen(self):
         return self.screen

@@ -7,6 +7,9 @@ class Piece():
     def getHasBomb(self):
         return self.hasBomb
 
+    def setHasBomb(self, hasBomb):
+        self.hasBomb = hasBomb
+
     def getClicked(self):
         return self.clicked
 

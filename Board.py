@@ -26,7 +26,6 @@ class Board():
                 piece = Piece(hasBomb)
                 row.append(piece)
             self.board.append(row)
-        self.setNeighbors()
 
     def getBoard(self):
         return self.board
@@ -61,16 +60,15 @@ class Board():
             piece.toggleFlag()
             return
         piece.click()
-        if (piece.getHasBomb()):
+        if (piece.getHasBomb() and self.clickNumber != 0):
             self.lost = True
             return
         self.clickNumber += 1
-        if (piece.getNumberAround() != 0):
+        if (self.clickNumber != 1 and piece.getNumberAround() != 0):
             return
         for neighbor in piece.getNeighbors():
-            if (not neighbor.getHasBomb() and not neighbor.getClicked):
-                continue
-            self.handleClick(neighbor, False)
+            if (not neighbor.getHasBomb() and neighbor.getClicked):
+                self.handleClick(neighbor, False)
 
     def getLost(self):
         return self.lost
