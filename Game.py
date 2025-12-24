@@ -19,7 +19,6 @@ class Game():
         running = True
         while running:
             if (pygame.mouse.get_pressed()[0]):
-                if self.board.clickNumber == 0:
                     position = pygame.mouse.get_pos()
                     index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
                     piece = self.board.getPiece(index)
