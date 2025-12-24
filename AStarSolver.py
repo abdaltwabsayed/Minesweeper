@@ -2,13 +2,23 @@
 
 import heapq
 import copy
+import random
+
 
 class AStarSolver:
     def __init__(self, board):
         self.board = board
 
     # ---------- MAIN LOOP ----------
-    def move(self):
+    def solve(self):
+        if self.board.clickNumber == 0:
+            x = random.choice(range(self.board.getSize()[0]))
+            y = random.choice(range(self.board.getSize()[1]))
+            piece = self.board.getPiece((x, y))
+            piece.setHasBomb(False)
+            self.board.setNeighbors()
+            self.board.handleClick(piece, False)
+
         plan = self.a_star()
         if not plan:
             return
@@ -21,13 +31,11 @@ class AStarSolver:
 
     # ---------- A* SEARCH ----------
     def a_star(self):
-        start = copy.deepcopy(self.board)
-
         pq = []
         counter = 0
 
-        h0 = self.heuristic(start)
-        heapq.heappush(pq, (h0, 0, counter, start, []))
+        unOpened, piecesState = self.heuristic(self.board)
+        heapq.heappush(pq, (unOpened, 0, counter, self.board, []))
         counter += 1
 
         visited = set()
@@ -35,10 +43,9 @@ class AStarSolver:
         while pq:
             f, g, _, board, path = heapq.heappop(pq)
 
-            key = self.board_key(board)
-            if key in visited:
+            if piecesState in visited:
                 continue
-            visited.add(key)
+            visited.add(piecesState)
 
             # ---------- deterministic moves (cost 0) ----------
             actions = self.deterministic_actions(board)
@@ -82,18 +89,13 @@ class AStarSolver:
 
     def heuristic(self, board):
         unopened = 0
+        piecesState = []
         for row in board.getBoard():
             for piece in row:
                 if not piece.getClicked():
                     unopened += 1
-        return unopened
-
-    def board_key(self, board):
-        key = []
-        for row in board.getBoard():
-            for p in row:
-                key.append((p.getClicked(), p.getFlagged(), p.getNumberAround()))
-        return tuple(key)
+                piecesState.append((piece.getClicked(), piece.getFlagged(), piece.getNumberAround()))
+        return unopened, tuple(piecesState)
 
     def openUnflagged(self, neighbors):
         for piece in neighbors:
