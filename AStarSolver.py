@@ -16,32 +16,32 @@ class AStarSolver:
             y = random.choice(range(self.board.getSize()[1]))
             piece = self.board.getPiece((x, y))
             piece.setHasBomb(False)
-            self.board.setNeighbors()
             self.board.handleClick(piece, False)
+            self.board.setNeighbors()
 
         plan = self.a_star()
         if not plan:
             return
 
-        action, neighbors = plan[0]
-        if action == "open":
-            self.openUnflagged(neighbors)
-        elif action == "flag":
-            self.flagAll(neighbors)
+        for task in plan:
+            action, neighbors = task
+            if action == "open":
+                self.openUnflagged(neighbors)
+            elif action == "flag":
+                self.flagAll(neighbors)
 
     # ---------- A* SEARCH ----------
     def a_star(self):
         pq = []
-        counter = 0
+        h, g = 0, 0
 
-        unOpened, piecesState = self.heuristic(self.board)
-        heapq.heappush(pq, (unOpened, 0, counter, self.board, []))
-        counter += 1
+        heapq.heappush(pq, (self.board, [h, g]))
 
         visited = set()
 
         while pq:
-            f, g, _, board, path = heapq.heappop(pq)
+            board, path = heapq.heappop(pq)
+            piecesState = self.heuristic(board)
 
             if piecesState in visited:
                 continue
@@ -50,14 +50,14 @@ class AStarSolver:
             # ---------- deterministic moves (cost 0) ----------
             actions = self.deterministic_actions(board)
             if actions:
-                action = actions[0]
-                return path + [action]
+                path[1] += len(actions)
+                return actions
 
             # ---------- guessing (cost 1) ----------
             guesses = self.guess_actions(board)
             if guesses:
-                action = guesses[0]
-                return path + [action]
+                path[0] += len(guesses)
+                return guesses
 
         return []
 
@@ -70,12 +70,14 @@ class AStarSolver:
 
                 around = piece.getNumberAround()
                 neighbors = piece.getNeighbors()
-                unknown = sum(not p.getClicked() for p in neighbors)
-                flagged = sum(p.getFlagged() for p in neighbors)
+                unknown, flagged = 0, 0
+                for p in neighbors:
+                    if not p.getClicked(): unknown += 1
+                    if p.getFlagged(): flagged += 1
 
                 if around == flagged and unknown > 0:
                     actions.append(("open", neighbors))
-                elif around == unknown and unknown > 0:
+                if around == unknown and unknown > 0:
                     actions.append(("flag", neighbors))
         return actions
 
@@ -83,19 +85,22 @@ class AStarSolver:
         actions = []
         for row in board.getBoard():
             for piece in row:
-                if not piece.getClicked() and not piece.getFlagged():
-                    actions.append(("open", [piece]))
-        return actions[:1]  # single guess is enough
+                around = piece.getNumberAround()
+                neighbors = piece.getNeighbors()
+                unknown, flagged = 0, 0
+                for p in neighbors:
+                    if not p.getClicked(): unknown += 1
+                    if p.getFlagged(): flagged += 1
+                if unknown > (around - flagged):
+                    actions.append(("open", neighbors))
+        return actions  # single guess is enough
 
     def heuristic(self, board):
-        unopened = 0
         piecesState = []
         for row in board.getBoard():
             for piece in row:
-                if not piece.getClicked():
-                    unopened += 1
                 piecesState.append((piece.getClicked(), piece.getFlagged(), piece.getNumberAround()))
-        return unopened, tuple(piecesState)
+        return tuple(piecesState)
 
     def openUnflagged(self, neighbors):
         for piece in neighbors:

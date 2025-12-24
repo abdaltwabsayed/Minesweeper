@@ -15,17 +15,19 @@ class Game():
     def run(self):
         pygame.init()
         self.screen = pygame.display.set_mode(self.screenSize)
-
+        solver = AStarSolver(self.board)
         running = True
         while running:
             if (pygame.mouse.get_pressed()[0]):
-                position = pygame.mouse.get_pos()
-                index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
-                piece = self.board.getPiece(index)
-                piece.setHasBomb(False)
-                piece.click()
+                if self.board.clickNumber == 0:
+                    position = pygame.mouse.get_pos()
+                    index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0]
+                    piece = self.board.getPiece(index)
+                    if piece.getHasBomb():
+                        piece.setHasBomb(False)
+                        piece.click()
+                        self.board.clickNumber += 1
             self.board.setNeighbors()
-            solver = AStarSolver(self.board)
             solver.solve()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -43,9 +45,9 @@ class Game():
             if (self.board.getWon()):
                 font = pygame.font.SysFont(None, 90)
                 text = font.render("You Win!", True, (0, 255, 0), (255, 255, 255, 30))
-                self.screen.blit(text, (0.29 * self.screenSize[0], 0.4 * self.screenSize[1]))
+                self.screen.blit(text, (0.33 * self.screenSize[0], 0.4 * self.screenSize[1]))
                 pygame.display.flip()
-                sound = pygame.mixer.Sound("win.wav")
+                sound = pygame.mixer.Sound("win.mp3")
                 sound.play()
                 sleep(3)
                 running = False
