@@ -40,6 +40,7 @@ class AStarSolver:
         visited = set()
 
         while pq:
+            plan = []
             board, path = heapq.heappop(pq)
             piecesState = self.heuristic(board)
 
@@ -63,6 +64,7 @@ class AStarSolver:
 
     def deterministic_actions(self, board):
         actions = []
+        constraints = []
         for row in board.getBoard():
             for piece in row:
                 if not piece.getClicked():
@@ -79,6 +81,25 @@ class AStarSolver:
                     actions.append(("open", neighbors))
                 if around == unknown and unknown > 0:
                     actions.append(("flag", neighbors))
+                # store for subset logic
+                unknown_set = {n for n in neighbors if not n.getClicked and not n.getFlagged}
+                mines_needed = around - flagged
+                constraints.append((piece, unknown_set, mines_needed))
+        # subset reasoning (covers the image case)
+        for a_piece, A, a_mines in constraints:
+            for b_piece, B, b_mines in constraints:
+                if a_piece is b_piece:
+                    continue
+                if A <= B:  # A subset of B
+                    diff = B - A
+                    if not diff:
+                        continue
+                    # if both need same number of mines, the extra cells in B are safe
+                    if a_mines == b_mines:
+                        actions.append(("open", diff))
+                    # if the extra cells must all be mines
+                    elif (b_mines - a_mines) == len(diff):
+                        actions.append(("flag", diff))
         return actions
 
     def guess_actions(self, board):
@@ -92,8 +113,10 @@ class AStarSolver:
                     if not p.getClicked(): unknown += 1
                     if p.getFlagged(): flagged += 1
                 if unknown > (around - flagged):
-                    actions.append(("open", neighbors))
-        return actions  # single guess is enough
+                    # single guess is enough
+                    unknown_set = {n for n in neighbors if not n.getClicked and not n.getFlagged}
+                    actions.append(("open", list(unknown_set)[:1]))
+        return actions
 
     def heuristic(self, board):
         piecesState = []
